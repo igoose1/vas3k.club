@@ -1,7 +1,10 @@
 FROM ubuntu:24.04
+ARG UV_SYSTEM_PYTHON=1
 ENV MODE dev
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PIP_BREAK_SYSTEM_PACKAGES=1
+
+COPY --from=ghcr.io/astral-sh/uv:0.5.21 /uv /bin/
 
 RUN apt-get update \
     && apt-get install --no-install-recommends -yq \
@@ -25,11 +28,11 @@ RUN chmod 600 /etc/crontab
 
 RUN cd frontend && npm ci && npm run build && cd ..
 
-RUN pip3 install pipenv
+RUN uv pip install pipenv
 RUN if [ "$MODE" = "production" ]; then \
         pipenv requirements --keep-outdated > requirements.txt; \
     elif [ "$MODE" = "dev" ]; then \
         pipenv requirements --dev > requirements.txt; \
     fi
 
-RUN pip3 install --ignore-installed -r requirements.txt
+RUN uv pip install --ignore-installed -r requirements.txt
